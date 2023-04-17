@@ -1,0 +1,25 @@
+name: Build and publish python package
+
+on:
+  release:
+    types: [ published ]
+
+env:
+  DEFAULT_PYTHON: "3.10"
+
+jobs:
+  publish-package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish PyPi package
+        uses: code-specialist/pypi-poetry-publish@v1
+        with:
+          PACKAGE_DIRECTORY: "./psa_ccc"
+          PYTHON_VERSION: ${{ env.DEFAULT_PYTHON }}
+          BRANCH: main
+          ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          PUBLISH_REGISTRY_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+          PUBLISH_REGISTRY_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          PUBLISH_REGISTRY: "https://test.pypi.org/legacy/"
