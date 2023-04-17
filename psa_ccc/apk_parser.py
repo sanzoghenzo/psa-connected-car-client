@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from pyaxmlparser.core import APK
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import pkcs12
@@ -14,6 +13,7 @@ from httpx import AsyncClient
 from msgspec import Struct
 from msgspec.json import decode
 from msgspec.json import encode
+from pyaxmlparser.core import APK
 
 from psa_ccc.brand_config import BRAND_CONFIG_MAP
 from psa_ccc.github import CacheStorage

@@ -121,7 +121,7 @@ class PSAClient:
         """Returns the latest GPS Position of the Vehicle."""
         response = await self.client.get(
             f"/user/vehicles/{vehicle_id}/lastPosition",
-            headers={'Accept': 'application/vnd.geo+json'}
+            headers={"Accept": "application/vnd.geo+json"},
         )
         return _handle_response(response, model=mdl.Position)
 
