@@ -1,0 +1,132 @@
+# https://taskfile.dev
+# If not already done, install task with
+# sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
+# windows: choco install go-task or download from https://github.com/go-task/task/releases
+version: '3'
+
+tasks:
+  install:package:
+    label: 'install:{{.PACKAGE_NAME}}'
+    vars:
+      PACKAGE_NAME: '{{.PACKAGE_NAME}}'
+      COMMAND_NAME: '{{default .PACKAGE_NAME .COMMAND_NAME}}'
+    cmds:
+      - "pip install {{.PACKAGE_NAME}}"
+    status:
+      - 'command -v {{.COMMAND_NAME}}'
+
+  install:pre-commit:
+    cmds:
+      - task: install:package
+        vars:
+          PACKAGE_NAME: pre-commit
+
+  install:poetry:
+    cmds:
+      - task: install:package
+        vars:
+          PACKAGE_NAME: poetry
+
+  install:commitizen:
+    cmds:
+      - task: install:package
+        vars:
+          PACKAGE_NAME: commitizen
+          COMMAND_NAME: cz
+
+  install:mypy:
+    cmds:
+      - task: install:package
+        vars:
+          PACKAGE_NAME: mypy
+
+  install:jake:
+    cmds:
+      - task: install:package
+        vars:
+          PACKAGE_NAME: jake
+
+  install:jq:
+    cmds:
+      - cmd: apt-get update && apt-get install -y --no-install-recommends jq
+        platforms: ["linux"]
+      - cmd: chocolatey install jq
+        platforms: [ "windows" ]
+    status:
+      - command -v jq
+
+  install:yq:
+    deps:
+      - install:jq
+    cmds:
+      - task: install:package
+        vars:
+          PACKAGE_NAME: yq
+
+  init-pre-commit:
+    deps:
+      - install:pre-commit
+    cmds:
+      - pre-commit install
+
+  init:
+    deps:
+      - install:poetry
+    cmds:
+      - poetry install
+      - task: init-pre-commit
+
+  update:
+    deps:
+      - install:poetry
+    cmds:
+      - poetry update
+
+  lint:
+    deps:
+      - install:pre-commit
+    cmds:
+      - pre-commit run --all
+
+  security:
+    deps:
+      - install:yq
+      - install:jake
+    platforms: ["linux"]
+    cmds:
+      - tomlq -t 'del(.package[] | select(.category != "main"))' poetry.lock | jake ddt -t POETRY
+
+  mypy:
+    cmds:
+      - cmd: poetry install --with typing
+      - cmd: poetry run mypy psa_ccc
+
+  test:
+    cmds:
+      - poetry install --with test
+      - poetry run pytest --cov
+
+  default:
+    cmds:
+      - task: lint
+      - task: mypy
+      - task: test
+      - task: security
+
+  commit:
+    deps:
+      - install:commitizen
+    cmds:
+      - cz c
+    interactive: true
+
+  bump:
+    deps:
+      - install:commitizen
+    cmds:
+      - cz bump --changelog
+
+  docs:
+    cmds:
+      - poetry install --without main --with docs
+      - poetry run mkdocs serve
