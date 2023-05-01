@@ -10,7 +10,7 @@ packages = [{include = "psa_ccc"}]
 python = "^3.10"
 httpx = "^0.23.3"
 authlib = "^1.2.0"
-msgspec = "^0.13.1"
+msgspec = {git = "https://github.com/jcrist/msgspec"}
 cryptography = "^40.0.1"
 pyaxmlparser = "^0.3.27"
 
@@ -103,7 +103,6 @@ warn_redundant_casts = true
 warn_unreachable = true
 warn_unused_configs = true
 warn_unused_ignores = true
-plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
 module = [
@@ -112,6 +111,7 @@ module = [
     "requests.*",
     "authlib.*",
     "pytest",
+    "pyaxmlparser.*"
 ]
 ignore_missing_imports = true
 

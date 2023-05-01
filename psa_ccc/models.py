@@ -6,6 +6,8 @@ from enum import StrEnum
 from enum import auto
 from re import sub
 from typing import Any
+from typing import Generic
+from typing import TypeVar
 
 from msgspec import Struct
 
@@ -21,13 +23,17 @@ def rename(name: str) -> str | None:
     return f"_{name}" if name in {"links", "embedded"} else camelize(name)
 
 
-class PaginatedResponse(Struct, kw_only=True, rename=rename):
+T = TypeVar("T")
+
+
+class PaginatedResponse(Struct, Generic[T], kw_only=True, rename=rename):
     """Generic wrapper for paginated responses."""
 
     # links: Any
     total: int
     current_page: int
     total_page: int
+    embedded: T
 
 
 class BaseEntity(Struct, kw_only=True, rename=rename):
@@ -64,16 +70,16 @@ class Engine(Struct, kw_only=True, rename=rename):
     class_: str = "Thermic"  # "Electric"
 
 
-class PaginatedVehicles(PaginatedResponse):
-    """Paginated response of get vehicles."""
-
-    embedded: VehicleList
-
-
 class VehicleList(Struct, kw_only=True, rename=rename):
     """List of the vehicles of a user."""
 
     vehicles: list[VehicleSummary]
+
+
+class PaginatedVehicles(PaginatedResponse[VehicleList]):
+    """Paginated response of get vehicles."""
+
+    pass
 
 
 class VehicleSummary(Struct, kw_only=True, rename=rename):
@@ -97,19 +103,17 @@ class Vehicle(Struct, kw_only=True, rename=rename):
     # links: Any
 
 
-class VehicleOdometer(Struct, kw_only=True, rename=rename):
+class VehicleOdometer(BaseEntity, kw_only=True, rename=rename):
     """Vehicle odometer."""
 
-    created_at: datetime.datetime
     mileage: float  # [km]
 
 
-class Battery(Struct, kw_only=True, rename=rename):
+class Battery(BaseEntity, kw_only=True, rename=rename):
     """Describe the car (with combustion engine) battery status."""
 
-    created_at: datetime.datetime
-    current: float
-    voltage: float
+    current: float = 0
+    voltage: float = 0
 
 
 class Opening(Struct, kw_only=True, rename=rename):
@@ -126,13 +130,6 @@ class DoorsState(Struct, kw_only=True, rename=rename):
     opening: list[Opening]
 
 
-class EVBatteryHealth(Struct, kw_only=True, rename=rename):
-    """Battery health status."""
-
-    capacity: int  # [%]
-    resistance: int  # [%]
-
-
 class EVBatteryCharging(Struct, kw_only=True, rename=rename):
     """Electric Vehicle charging information."""
 
@@ -144,48 +141,74 @@ class EVBatteryCharging(Struct, kw_only=True, rename=rename):
     # remaining_time: datetime.datetime  # ISO8601 format
 
 
+class EVBatteryLoad(BaseEntity):
+    """Battery capacity and health for electric energy type."""
+
+    capacity: int = 0
+    residual: int = 0
+
+
 class EVBattery(Struct, kw_only=True, rename=rename):
     """Battery capacity and health for electric energy type."""
 
-    capacity: float
-    health: EVBatteryHealth
+    load: EVBatteryLoad
 
 
-class Energy(Struct, kw_only=True, rename=rename):
-    """Percentage energy."""
+class ElectricEnergyExtension(Struct, kw_only=True, rename=rename):
+    """Electric energy extension info."""
 
-    # battery: EVBattery
-    # consumption: float
-    level: float  # 0-100
-    # residual: float  # [kWh]
-    type: str  # "Fuel" or "Electric"
-    autonomy: float = 0  # [km]
+    battery: EVBattery
     charging: EVBatteryCharging | None = None
-    updated_at: datetime.datetime | None = None
+
+
+class EnergyExtension(Struct, kw_only=True, rename=rename):
+    """Vehicle status energy extension."""
+
+    electric: ElectricEnergyExtension | None = None
+
+
+class Energy(BaseEntity, kw_only=True, rename=rename):
+    """Vehicle energy info."""
+
+    type: str  # "Fuel" or "Electric"
+    level: float  # 0-100
+    sub_type: str = ""  # "FossilEnergy", "ElectricEnergy", ...
+    autonomy: float = 0  # [km]
+    extension: EnergyExtension | None = None
+
+
+class EnvironmentAir(BaseEntity):
+    """Environment air status."""
+
+    temp: float
+
+
+class EnvironmentLuminosity(BaseEntity):
+    """Environment luminosity status."""
+
+    day: bool
 
 
 class Environment(BaseEntity):
     """Environment status."""
 
-    air: Any  # temp: float
-    luminosity: Any  # day: bool
+    air: EnvironmentAir
+    luminosity: EnvironmentLuminosity
 
 
-class Ignition(Struct, kw_only=True, rename=rename):
+class Ignition(BaseEntity, kw_only=True, rename=rename):
     """Ignition."""
 
-    updated_at: datetime.datetime
     type: str  # "Stop" | "StartUp" | "Start" | "Free"
 
 
-class Kinetic(Struct, kw_only=True, rename=rename):
+class Kinetic(BaseEntity, kw_only=True, rename=rename):
     """Everything related to the movement of the vehicle."""
 
     moving: bool
     acceleration: float = 0
     pace: float = 0
     speed: float = 0
-    created_at: datetime.datetime | None = None
 
 
 class Point(Struct, kw_only=True, rename=rename):
@@ -195,10 +218,9 @@ class Point(Struct, kw_only=True, rename=rename):
     type: str = "Point"
 
 
-class PositionProperties(Struct, kw_only=True, rename=rename):
+class PositionProperties(BaseEntity, kw_only=True, rename=rename):
     """Properties of a geospatial position."""
 
-    updated_at: datetime.datetime
     heading: float  # [0-360]
     # signal_quality: int  # [%]
     type: str  # "Estimate" | "Acquire"
@@ -236,13 +258,12 @@ class PreconditionProgram(Struct, kw_only=True, rename=rename):
     recurrence: str = "Daily"  # None, Weekly
 
 
-class AirConditioning(Struct, kw_only=True, rename=rename):
+class AirConditioning(BaseEntity, kw_only=True, rename=rename):
     """Air conditioning."""
 
     # failure_cause: str  # enum...
     programs: list[PreconditionProgram]
     status: str  # enum
-    updated_at: datetime.datetime
 
 
 class Preconditioning(Struct, kw_only=True, rename=rename):
@@ -251,26 +272,23 @@ class Preconditioning(Struct, kw_only=True, rename=rename):
     air_conditioning: AirConditioning
 
 
-class Privacy(Struct, kw_only=True, rename=rename):
+class Privacy(BaseEntity, kw_only=True, rename=rename):
     """Privacy model."""
 
-    created_at: datetime.datetime
     state: str  # enum
 
 
-class Safety(Struct, kw_only=True, rename=rename):
+class Safety(BaseEntity, kw_only=True, rename=rename):
     """Safety model."""
 
-    created_at: datetime.datetime
     belt_warning: str  # Normal | Omission
     e_call_triggering_request: str  # AirbagUnabled | NoRequest | Requested
 
 
-class ServiceType(Struct, kw_only=True, rename=rename):
+class ServiceType(BaseEntity, kw_only=True, rename=rename):
     """Service type."""
 
     type: str  # Electric | Hybrid | Unknown
-    updated_at: datetime.datetime
 
 
 class Extension(Struct, kw_only=True, rename=rename):
@@ -286,29 +304,28 @@ class VehicleStatusEmbedded(Struct, kw_only=True, rename=rename):
     extension: Extension
 
 
-class VehicleStatus(BaseEntity):
+class VehicleStatus(BaseEntity, kw_only=True, rename=rename):
     """Vehicle status response."""
 
-    # links: Any  # self and vehicle
-    battery: Battery
-    # doors_state: DoorsState
-    energy: list[Energy]
-    # environment: Environment
-    # ignition: Ignition
-    kinetic: Kinetic
     last_position: Position
-    preconditionning: Preconditioning
+    battery: Battery
     privacy: Privacy
-    # safety: Safety
     service: ServiceType
-    # timed.odemeter {created_at, mileage}
+    environment: Environment
+    odometer: VehicleOdometer
+    kinetic: Kinetic
+    preconditioning: Preconditioning
+    energies: list[Energy]
+    # links: Any  # self and vehicle
+    # doors_state: DoorsState
+    # safety: Safety
+    ignition: Ignition | None = None
 
 
-class Alerts(PaginatedResponse):
+class Alerts(PaginatedResponse[Any]):
     """Alerts container."""
 
-    embedded: Any
-    #   alerts: list[Alert]
+    pass
 
 
 class Maintenance(BaseEntity):
