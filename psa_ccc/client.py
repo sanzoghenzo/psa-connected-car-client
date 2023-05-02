@@ -7,7 +7,7 @@ from typing import Any
 from typing import List
 from typing import TypeVar
 
-from authlib.integrations.httpx_client import AsyncOAuth2Client
+from httpx import AsyncClient
 from httpx import QueryParams
 from httpx import Response
 from msgspec.json import decode
@@ -30,11 +30,7 @@ def _handle_response(response: Response, model: type[T]) -> T:
     return decode(response.text, type=model)
 
 
-def _query_params(
-    other_params: dict[str, Any] | None = None
-) -> QueryParams | None:
-    if not other_params:
-        return None
+def _query_params(other_params: dict[str, Any]) -> QueryParams | None:
     to_add = {k: v for k, v in other_params.items() if v}
     return QueryParams(to_add)
 
@@ -43,14 +39,14 @@ def _query_params(
 class PSAClient:
     """User API."""
 
-    client: AsyncOAuth2Client
+    client: AsyncClient
 
     # TODO: add a decoder cache for each schema do decode
 
-    async def get_user(self) -> mdl.UserResponse:
+    async def get_user(self) -> mdl.User:
         """Get user information."""
         response = await self.client.get("/user")
-        return _handle_response(response, model=mdl.UserResponse)
+        return _handle_response(response, model=mdl.User)
 
     async def get_vehicles(
         self,
@@ -66,12 +62,8 @@ class PSAClient:
             "locale": locale,
             "pageToken": page_token,
         }
-        response = await self.client.get(
-            "/user/vehicles", params=_query_params(params)
-        )
-        return _handle_response(
-            response, model=mdl.PaginatedVehicles
-        ).embedded.vehicles
+        response = await self.client.get("/user/vehicles", params=_query_params(params))
+        return _handle_response(response, model=mdl.PaginatedVehicles).embedded.vehicles
 
     async def get_vehicle(self, vehicle_id: str) -> mdl.Vehicle:
         """Get the vehicles associated with the User."""
@@ -114,7 +106,7 @@ class PSAClient:
         )
         return _handle_response(response, model=mdl.Alert)
 
-    async def get_car_last_position(
+    async def get_vehicle_last_position(
         self,
         vehicle_id: str,
     ) -> mdl.Position:

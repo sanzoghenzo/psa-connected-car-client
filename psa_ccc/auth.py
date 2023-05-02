@@ -21,11 +21,9 @@ class TokenStorage(Protocol):
         """Save the token."""
 
 
-async def oauth_factory(
+async def create_client(
     client_id: str,
     client_secret: str,
-    username: str,
-    password: str,
     token_url: str,
     realm: str,
     token_storage: TokenStorage,
@@ -36,8 +34,6 @@ async def oauth_factory(
     Args:
         client_id: client ID
         client_secret: client secret
-        username: username
-        password: password
         token_url: URL for token refresh
         realm: API realm
         token_storage: token storage handler
@@ -77,8 +73,37 @@ async def oauth_factory(
         update_token=update_token,
         base_url="https://api.groupe-psa.com/connectedcar/v4",
     )
-
     client.register_compliance_hook("protected_request", _fix_request)
+    return client
+
+
+async def oauth_factory(
+    client_id: str,
+    client_secret: str,
+    username: str,
+    password: str,
+    token_url: str,
+    realm: str,
+    token_storage: TokenStorage,
+) -> AsyncOAuth2Client:
+    """
+    Create the OAuth session handler for the API client.
+
+    Args:
+        client_id: client ID
+        client_secret: client secret
+        username: username
+        password: password
+        token_url: URL for token refresh
+        realm: API realm
+        token_storage: token storage handler
+
+    Returns:
+        OAuth session
+    """
+    client = await create_client(
+        client_id, client_secret, token_url, realm, token_storage
+    )
 
     token = await client.fetch_token(
         token_url,

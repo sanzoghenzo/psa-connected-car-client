@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any
 
 import httpx
@@ -16,13 +15,14 @@ from msgspec.json import encode
 from pyaxmlparser.core import APK
 
 from psa_ccc.brand_config import BRAND_CONFIG_MAP
-from psa_ccc.github import CacheStorage
 from psa_ccc.github import GitHubUrlsBuilder
 from psa_ccc.github import download_github_file
+from psa_ccc.storage import CacheStorage
 
 APP_VERSION = "1.33.0"
 GITHUB_OWNER = "flobz"
 GITHUB_REPO = "psa_apk"
+PFX_PASSWORD = b"y5Y2my5B"
 
 
 class ConfigInfo(Struct):
@@ -33,7 +33,7 @@ class ConfigInfo(Struct):
     site_code: str
     brand_id: str
     culture: str
-    public_key: bytes | None
+    public_certificate: bytes | None
     private_key: bytes | None
     user_id: str = ""  # used for MQTT
 
@@ -43,21 +43,17 @@ class ConfigInfo(Struct):
         return f"{self.brand_id}/GetAccessToken"
 
 
-async def get_content_from_apk(
+async def download_apk(
     client: AsyncClient,
     filename: str,
-    country_code: str,
-    site_code: str,
     storage: CacheStorage,
-) -> ConfigInfo:
+) -> APK:
     """
     Returns the needed information from the APK.
 
     Args:
         client: async http client
         filename: name of the APK file to download
-        country_code: country code
-        site_code: site code
         storage: file storage handler
 
     Returns:
@@ -66,44 +62,37 @@ async def get_content_from_apk(
     url_builder = GitHubUrlsBuilder(GITHUB_OWNER, GITHUB_REPO, "", filename)
     await download_github_file(client, storage, url_builder)
     apk_bytes = storage.read(filename)
-    return retrieve_content_from_apk(apk_bytes, country_code, site_code)
+    return APK(apk_bytes, raw=True)
 
 
-def retrieve_content_from_apk(
-    apk_bytes: bytes, country_code: str, site_code: str
-) -> ConfigInfo:
+def get_config_from_apk(apk: APK, country_code: str, site_code: str) -> ConfigInfo:
     """
     Return the configuration information from an APK file.
 
     Args:
-        apk_bytes: contents of APK file
+        apk: APK
         country_code: country code
         site_code: site code
 
     Returns:
         Configuration data for the PSA client.
     """
-    apk = APK(apk_bytes, raw=True)
     package_name = apk.get_package()
     resources = apk.get_android_resources()
-    culture = _get_cultures_code(
-        apk.get_file("res/raw/cultures.json"), country_code
-    )
+    culture = _get_cultures_code(apk.get_file("res/raw/cultures.json"), country_code)
     parameters = json.loads(apk.get_file(_get_parameters_path(culture)))
 
     pfx_cert = apk.get_file("assets/MWPMYMA1.pfx")
-    public, private = get_keys(pfx_cert, b"y5Y2my5B")
+    public, private = get_keys(pfx_cert, PFX_PASSWORD)
 
-    client_secret = parameters["cvsSecret"]
-    client_id = parameters["cvsClientId"]
     brand_id_url = resources.get_string(package_name, "HOST_BRANDID_PROD")[1]
     return ConfigInfo(
-        client_id=client_id,
-        client_secret=client_secret,
+        client_id=parameters["cvsClientId"],
+        client_secret=parameters["cvsSecret"],
         site_code=site_code,
         brand_id=brand_id_url,
         culture=culture,
-        public_key=public,
+        public_certificate=public,
         private_key=private,
     )
 
@@ -118,9 +107,7 @@ def _get_parameters_path(culture: str) -> str:
     return f"res/raw-{language}-r{country}/parameters.json"
 
 
-def get_keys(
-    pfx_data: bytes, pfx_password: bytes
-) -> tuple[bytes | None, bytes | None]:
+def get_keys(pfx_data: bytes, pfx_password: bytes) -> tuple[bytes | None, bytes | None]:
     """
     Returns the public and private keys from a pfx certificate.
 
@@ -157,6 +144,7 @@ async def first_launch(
     email: str,
     password: str,
     country_code: str,
+    storage: CacheStorage,
 ) -> ConfigInfo:
     """
     Retrieves the configuration for the API client from the Android app.
@@ -167,19 +155,18 @@ async def first_launch(
         email: user email
         password: user password
         country_code: country code
+        storage: cache storage
 
     Returns:
         Configuration from the Android app.
     """
-    brand_config = BRAND_CONFIG_MAP[brand]
-    site_code = brand_config.site_code(country_code)
-    storage = CacheStorage(Path(__file__).parent)
     config_path = "config.json"
     if storage.exists(config_path):
         return decode(storage.read(config_path), type=ConfigInfo)
-    apk_info = await get_content_from_apk(
-        client, brand_config.apk_name, country_code, site_code, storage
-    )
+    brand_config = BRAND_CONFIG_MAP[brand]
+    site_code = brand_config.site_code(country_code)
+    apk = await download_apk(client, brand_config.apk_name, storage)
+    apk_info = get_config_from_apk(apk, country_code, site_code)
     token = await _get_access_token(client, apk_info, email, password)
     cert = _save_certs(apk_info, storage)
     res_dict = await _get_user(brand_config.user_url, apk_info, token, cert)
@@ -241,8 +228,8 @@ async def _get_user(
 
 
 def _save_certs(apk_info: ConfigInfo, storage: CacheStorage) -> tuple[str, str]:
-    if apk_info.public_key:
-        storage.save(apk_info.public_key, "public.pem")
+    if apk_info.public_certificate:
+        storage.save(apk_info.public_certificate, "public.pem")
     if apk_info.private_key:
         storage.save(apk_info.private_key, "private.pem")
     return str(storage.get_full_path("public.pem")), str(

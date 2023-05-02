@@ -1,6 +1,6 @@
 # PSA Connected Car API Client
 
-API client for PSA groupe connected car service.
+API client for PSA group connected car service.
 
 This is a rework of the wonderful [PSA Car Controller](https://github.com/flobz/psa_car_controller) by [@flobz](https://github.com/flobz).
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from pathlib import Path
 
 import httpx
 from psa_ccc.apk_parser import ConfigInfo
@@ -10,7 +11,10 @@ from psa_ccc.apk_parser import first_launch
 from psa_ccc.auth import oauth_factory
 from psa_ccc.brand_config import BRAND_CONFIG_MAP
 from psa_ccc.client import PSAClient
-from psa_ccc.memory_token_storage import MemoryTokenStorage
+from psa_ccc.storage import CacheStorage
+from psa_ccc.storage import SimpleCacheStorage
+
+from tests.memory_token_storage import MemoryTokenStorage
 
 # MQTT
 #   ChargeControls load config
@@ -43,9 +47,9 @@ async def main() -> None:
     """Bootstrap the client."""
     parser = build_parser()
     args = parser.parse_args()
-    # TODO: do this only on "config" command,
-    #  create and set up config storage for subsequent launches
-    config = await get_config(args)
+    storage = SimpleCacheStorage(Path(__file__).parent)
+    # TODO: do this only on "config" command
+    config = await get_config(args, storage)
     # TODO: make this configurable, use something permanent
     token_storage = MemoryTokenStorage()
     brand_config = BRAND_CONFIG_MAP[args.brand]
@@ -67,22 +71,30 @@ async def main() -> None:
     vehicle_id = vehicles[0].id
     vehicle = await api_client.get_vehicle(vehicle_id)
     print("First vehicle:", vehicle)
+    # This results in 500 error
+    # alerts = await api_client.get_vehicle_alerts(vehicle_id)
+    # print("Vehicle alerts:", alerts)
     status = await api_client.get_vehicle_status(vehicle_id)
     print("Vehicle status:", status)
     maintenance = await api_client.get_vehicle_maintenance(vehicle_id)
     print("Vehicle maintenance:", maintenance)
-    position = await api_client.get_car_last_position(vehicle_id)
+    position = await api_client.get_vehicle_last_position(vehicle_id)
     print("Vehicle position:", position)
     # This returns internal server error
     # alerts = await api_client.get_vehicle_alerts(vehicle_id)
     # print("Vehicle alerts:", alerts)
 
 
-async def get_config(args: argparse.Namespace) -> ConfigInfo:
+async def get_config(args: argparse.Namespace, storage: CacheStorage) -> ConfigInfo:
     """Retrieve the configuration for the first-time launch."""
     async with httpx.AsyncClient() as client:
         config = await first_launch(
-            client, args.brand, args.email, args.password, args.country_code
+            client,
+            args.brand,
+            args.email,
+            args.password,
+            args.country_code,
+            storage,
         )
     return config
 

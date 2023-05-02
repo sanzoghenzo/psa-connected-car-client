@@ -43,21 +43,13 @@ class BaseEntity(Struct, kw_only=True, rename=rename):
     updated_at: datetime.datetime | None = None
 
 
-class UserResponse(Struct, kw_only=True, rename=rename):
-    """Object returned by the get user response."""
-
-    # links: Any
-    embedded: VehicleList
-
-
 class User(BaseEntity):
     """User information."""
 
     first_name: str
     last_name: str
-    # email: str
-    # embedded:
-    # Vehicles: list[Vehicle]
+    email: str
+    embedded: VehicleList
     # links:
     # self: link
     # vehicles: link
@@ -97,7 +89,7 @@ class Vehicle(Struct, kw_only=True, rename=rename):
     id: str
     vin: str
     label: str = ""
-    pictures: list[str] = []  # url in realtà, min 1 max 12 items
+    pictures: list[str] = []  # urls, min 1 max 12 items
     engine: list[Engine] = []
     # embedded: Any
     # links: Any

@@ -3,45 +3,12 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from hashlib import sha1
-from pathlib import Path
 
 from httpx import AsyncClient
 
+from psa_ccc.storage import CacheStorage
+
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class CacheStorage:
-    """Simple file storage implementation."""
-
-    cache_directory: Path
-
-    def get_full_path(self, filename: str) -> Path:
-        """Returns the full path of the given filename."""
-        return self.cache_directory.joinpath(filename).resolve()
-
-    def exists(self, filename: str) -> bool:
-        """Returns True if the given filename exists."""
-        return self.get_full_path(filename).exists()
-
-    def read(self, filename: str) -> bytes:
-        """Reads the contents of the file."""
-        if self.exists(filename):
-            return self.get_full_path(filename).read_bytes()
-        raise FileNotFoundError(filename)
-
-    def get_sha(self, filename: str) -> str:
-        """Returns the SHA of the given file."""
-        data = self.read(filename)
-        prefix = f"blob {len(data)}\u0000"
-        return sha1(prefix.encode("utf-8") + data).hexdigest()  # noqa S324
-
-    def save(self, data: bytes, filename: str) -> None:
-        """Save the data to the given file."""
-        full_path = self.get_full_path(filename)
-        full_path.parent.mkdir(parents=True, exist_ok=True)
-        full_path.write_bytes(data)
 
 
 @dataclass
@@ -79,9 +46,7 @@ async def download_github_file(
         url_builder: GitHubUrlsBuilder
     """
     filename = url_builder.filename
-    if not await needs_download(
-        client, storage, url_builder.dir_sha_url, filename
-    ):
+    if not await needs_download(client, storage, url_builder.dir_sha_url, filename):
         return
     response = await client.get(
         url_builder.raw_url,
@@ -131,9 +96,7 @@ async def _get_sha(client: AsyncClient, sha_url: str, filename: str) -> str:
     data = res.json()
     try:
         file_info = next(
-            file
-            for file in data.get("tree", [])
-            if file.get("path") == filename
+            file for file in data.get("tree", []) if file.get("path") == filename
         )
     except StopIteration as err:
         logger.error("can't get SHA for github file: %s", res)
