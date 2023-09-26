@@ -71,18 +71,22 @@ async def main() -> None:
     vehicle_id = vehicles[0].id
     vehicle = await api_client.get_vehicle(vehicle_id)
     print("First vehicle:", vehicle)
-    # This results in 500 error
-    # alerts = await api_client.get_vehicle_alerts(vehicle_id)
-    # print("Vehicle alerts:", alerts)
+    alerts = await api_client.get_vehicle_alerts(vehicle_id)
+    print("Vehicle alerts:", alerts)
     status = await api_client.get_vehicle_status(vehicle_id)
     print("Vehicle status:", status)
     maintenance = await api_client.get_vehicle_maintenance(vehicle_id)
     print("Vehicle maintenance:", maintenance)
-    position = await api_client.get_vehicle_last_position(vehicle_id)
-    print("Vehicle position:", position)
-    # This returns internal server error
-    # alerts = await api_client.get_vehicle_alerts(vehicle_id)
-    # print("Vehicle alerts:", alerts)
+    # This results in Internal server error
+    # position = await api_client.get_vehicle_last_position(vehicle_id)
+    # print("Vehicle position:", position)
+    # but we have the info in status.last_position.geometry.coordinates
+    print(
+        "Vehicle position:",
+        status.last_position.geometry.coordinates,
+        "last updated at",
+        status.last_position.properties.updated_at,
+    )
 
 
 async def get_config(args: argparse.Namespace, storage: CacheStorage) -> ConfigInfo:

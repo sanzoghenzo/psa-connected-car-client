@@ -20,7 +20,7 @@ def client() -> PSAClient:
 
 @pytest.mark.asyncio
 async def test_get_user(httpx_mock, client) -> None:
-    user_text = '{"email":"my@email.com","firstName":"MyName","lastName":"MyLastName","_links":{"self":{"href":"https://api.groupe-psa.com/connectedcar/v4/user"},"vehicles":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles"}},"_embedded":{"vehicles":[{"id":"myId","vin":"myVin","brand":"C","_links":{"alerts":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/alerts"},"collisions":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/collisions"},"trips":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/trips"},"self":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId"},"lastPosition":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/lastPosition"},"callbacks":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/callbacks"},"remotes":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/callbacks/{cbid}/remotes","templated":true},"telemetry":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/telemetry"},"user":{"href":"https://api.groupe-psa.com/connectedcar/v4/user"},"maintenance":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/maintenance"},"status":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/status"},"monitors":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/callbacks/{cbid}/monitors","templated":true}}}]}}'
+    user_text = '{"email":"my@email.com","firstName":"MyName","lastName":"MyLastName","_links":{"self":{"href":"https://api.groupe-psa.com/connectedcar/v4/user"},"vehicles":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles"}},"_embedded":{"vehicles":[{"id":"myId","vin":"myVin","vehicleExtension":{"vehicleBranding":{"brand":"C", "label":"myLabel"}, "vehiclePictures":{"pictures":[]}},"_links":{"alerts":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/alerts"},"collisions":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/collisions"},"trips":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/trips"},"self":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId"},"lastPosition":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/lastPosition"},"callbacks":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/callbacks"},"remotes":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/callbacks/{cbid}/remotes","templated":true},"telemetry":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/telemetry"},"user":{"href":"https://api.groupe-psa.com/connectedcar/v4/user"},"maintenance":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/maintenance"},"status":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/status"},"monitors":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/callbacks/{cbid}/monitors","templated":true}}}]}}'
     httpx_mock.add_response(text=user_text)
     user = await client.get_user()
     assert user == models.User(
@@ -28,7 +28,18 @@ async def test_get_user(httpx_mock, client) -> None:
         first_name="MyName",
         last_name="MyLastName",
         embedded=models.VehicleList(
-            vehicles=[models.VehicleSummary(brand="C", id="myId", vin="myVin")]
+            vehicles=[
+                models.VehicleSummary(
+                    id="myId",
+                    vin="myVin",
+                    vehicle_extension=models.VehicleExtension(
+                        vehicle_branding=models.VehicleBranding(
+                            brand="C", label="myLabel"
+                        ),
+                        vehicle_pictures=models.VehiclePictures(pictures=[]),
+                    ),
+                )
+            ]
         ),
     )
 
@@ -43,18 +54,34 @@ async def test_get_user_raises_api_error(httpx_mock, client) -> None:
 
 @pytest.mark.asyncio
 async def test_get_vehicles(httpx_mock, client) -> None:
-    text = '{"total":1, "currentPage":1, "totalPage":1, "_embedded":{"vehicles":[{"id":"myId","vin":"myVin","brand":"C","_links":{"alerts":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/alerts"},"collisions":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/collisions"},"trips":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/trips"},"self":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId"},"lastPosition":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/lastPosition"},"callbacks":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/callbacks"},"remotes":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/callbacks/{cbid}/remotes","templated":true},"telemetry":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/telemetry"},"user":{"href":"https://api.groupe-psa.com/connectedcar/v4/user"},"maintenance":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/maintenance"},"status":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/status"},"monitors":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/callbacks/{cbid}/monitors","templated":true}}}]}}'
+    text = '{"total":1, "currentPage":1, "totalPage":1, "_embedded":{"vehicles":[{"id":"myId","vin":"myVin","vehicleExtension":{"vehicleBranding":{"brand":"C", "label":"myLabel"}, "vehiclePictures":{"pictures":[]}},"_links":{"alerts":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/alerts"},"collisions":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/collisions"},"trips":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/trips"},"self":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId"},"lastPosition":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/lastPosition"},"callbacks":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/callbacks"},"remotes":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/callbacks/{cbid}/remotes","templated":true},"telemetry":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/telemetry"},"user":{"href":"https://api.groupe-psa.com/connectedcar/v4/user"},"maintenance":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/maintenance"},"status":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/status"},"monitors":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/callbacks/{cbid}/monitors","templated":true}}}]}}'
     httpx_mock.add_response(text=text)
     vehicles = await client.get_vehicles()
-    assert vehicles == [models.VehicleSummary(brand="C", id="myId", vin="myVin")]
+    assert vehicles == [
+        models.VehicleSummary(
+            id="myId",
+            vin="myVin",
+            vehicle_extension=models.VehicleExtension(
+                vehicle_branding=models.VehicleBranding(brand="C", label="myLabel"),
+                vehicle_pictures=models.VehiclePictures(pictures=[]),
+            ),
+        )
+    ]
 
 
 @pytest.mark.asyncio
 async def test_get_vehicle(httpx_mock, client) -> None:
-    text = '{"id":"myId","vin":"myVin","brand":"C","_links":{"alerts":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/alerts"},"collisions":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/collisions"},"trips":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/trips"},"self":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId"},"lastPosition":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/lastPosition"},"callbacks":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/callbacks"},"remotes":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/callbacks/{cbid}/remotes","templated":true},"telemetry":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/telemetry"},"user":{"href":"https://api.groupe-psa.com/connectedcar/v4/user"},"maintenance":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/maintenance"},"status":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/status"},"monitors":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/callbacks/{cbid}/monitors","templated":true}}}'
+    text = '{"id":"myId","vin":"myVin","vehicleExtension":{"vehicleBranding":{"brand":"C", "label":"myLabel"}, "vehiclePictures":{"pictures":[]}},"_links":{"alerts":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/alerts"},"collisions":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/collisions"},"trips":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/trips"},"self":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId"},"lastPosition":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/lastPosition"},"callbacks":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/callbacks"},"remotes":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/callbacks/{cbid}/remotes","templated":true},"telemetry":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/telemetry"},"user":{"href":"https://api.groupe-psa.com/connectedcar/v4/user"},"maintenance":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/maintenance"},"status":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/status"},"monitors":{"href":"https://api.groupe-psa.com/connectedcar/v4/user/vehicles/myId/callbacks/{cbid}/monitors","templated":true}}}'
     httpx_mock.add_response(text=text)
     vehicle = await client.get_vehicle("myId")
-    assert vehicle == models.Vehicle(brand="C", id="myId", vin="myVin")
+    assert vehicle == models.Vehicle(
+        id="myId",
+        vin="myVin",
+        vehicle_extension=models.VehicleExtension(
+            vehicle_branding=models.VehicleBranding(brand="C", label="myLabel"),
+            vehicle_pictures=models.VehiclePictures(pictures=[]),
+        ),
+    )
 
 
 # Real request returns 500, skipping for now

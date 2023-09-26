@@ -2,8 +2,7 @@
 from __future__ import annotations
 
 import datetime
-from enum import StrEnum
-from enum import auto
+from enum import Enum
 from re import sub
 from typing import Any
 from typing import Generic
@@ -74,22 +73,40 @@ class PaginatedVehicles(PaginatedResponse[VehicleList]):
     pass
 
 
+class VehicleBranding(Struct, kw_only=True, rename=rename):
+    """Vehicle branding."""
+
+    brand: str
+    label: str
+
+
+class VehiclePictures(Struct, kw_only=True, rename=rename):
+    """Vehicle pictures."""
+
+    pictures: list[str]
+
+
+class VehicleExtension(Struct, kw_only=True, rename=rename):
+    """Vehicle extension."""
+
+    vehicle_branding: VehicleBranding
+    vehicle_pictures: VehiclePictures
+
+
 class VehicleSummary(Struct, kw_only=True, rename=rename):
     """Summary of the vehicle found in the user response."""
 
-    brand: str
     id: str
     vin: str
+    vehicle_extension: VehicleExtension
 
 
 class Vehicle(Struct, kw_only=True, rename=rename):
     """Vehicle information."""
 
-    brand: str
     id: str
     vin: str
-    label: str = ""
-    pictures: list[str] = []  # urls, min 1 max 12 items
+    vehicle_extension: VehicleExtension
     engine: list[Engine] = []
     # embedded: Any
     # links: Any
@@ -328,89 +345,95 @@ class Maintenance(BaseEntity):
     # links: Any  # alerts, self, vehicle
 
 
-class AlertMsgEnum(StrEnum):
+class AlertMsgEnum(str, Enum):
     """Alert messages."""
 
-    alertOilPressure = auto()
-    alertCoolantTemp = auto()
-    chargingSystemFault = auto()
-    alertBrakeFluid = auto()
-    steeringFault = auto()
-    alertCoolantLevel = auto()
-    laneDepartureWarningSystemFault = auto()
-    frontLeftDoorOpenHighSpeed = auto()
-    frontRightDoorOpenHighSpeed = auto()
-    rearLeftDoorOpenHighSpeed = auto()
-    rearRightDoorOpenHighSpeed = auto()
-    trunkOpenHighSpeed = auto()
-    trunkWindowOpen = auto()
-    espFault = auto()
-    batteryLevelFault = auto()
-    waterInGasoil = auto()
-    padWearFault = auto()
-    fuelLevelAlarm = auto()
-    airbagOrSeatbeltFault = auto()
-    engineFault = auto()
-    absFault = auto()
-    riskOfParticleFilterBlockage = auto()
-    particleFilterAdditiveTooLow = auto()
-    suspensionFault = auto()
-    preaheatingDeactivatedBatteryTooLow = auto()
-    preaheatingDeactivatedFuelLevelTooLow = auto()
-    checkTheBrakeLamp = auto()
-    retractableRoofMechanismFault = auto()
-    alertSteeringLock = auto()
-    electronicImmobiliserFault = auto()
-    roofOperationImpossibleTemperatureTooHigh = auto()
-    roofOperationImpossibleStartEngine = auto()
-    roofOperationImpossibleApplyParkingBreak = auto()
-    hybridSystemFault = auto()
-    automaticHeadlampFault = auto()
-    hybridSystemFaultRepairedTheVehicle = auto()
-    washerLevelAlarm = auto()
-    batteryKeyAlarm = auto()
-    preaheatingDeactivatedSetTheClock = auto()
-    trailerConnectionFault = auto()
-    underInflationTyreFault = auto()
-    limitedVisibilityAidsCamera = auto()
-    electricModeNotAvailable = auto()
-    wheelPressureFault = auto()
-    checkSideLamps = auto()
-    checkRightBrakeLamp = auto()
-    checkLeftBrakeLamp = auto()
-    frontFoglightFault = auto()
-    rearFoglightFault = auto()
-    checkDirectionIndicator = auto()
-    checkReversingLamp = auto()
-    parkingAssistanceFault = auto()
-    adjustTyrePressure = auto()
-    antipollutionFault = auto()
-    placeGearBoxToP = auto()
-    riskOfIce = auto()
-    frontRightDoorOpen = auto()
-    frontLeftDoorOpen = auto()
-    rearRightDoorOpen = auto()
-    rearLeftDoorOpen = auto()
-    trunkOpen = auto()
-    bootOpen = auto()
-    rearScreenOpen = auto()
-    parkingBreakFault = auto()
-    activeSpoilerFault = auto()
-    automaticBreakingSystemFault = auto()
-    directionalHeadlampsFault = auto()
-    automaticGearboxFault = auto()
-    suspensionFaultLimitTo90km = auto()
-    frontLeftTyreNotMonitored = auto()
-    frontRightTyreNotMonitored = auto()
-    rearRightTyreNotMonitored = auto()
-    rearLeftTyreNotMonitored = auto()
-    powerSteeringFault = auto()
-    laneDepartureFault = auto()
-    tyreUnderInflation = auto()
-    spareWheelFittedDrivingAidsDeactivated = auto()
-    automaticBreakingDeactived = auto()
-    tupUpAdBlue = auto()
-    longPushToUnlockTankFault = auto()
+    ALERT_OIL_PRESSURE = "alertOilPressure"
+    ALERT_COOLANT_TEMP = "alertCoolantTemp"
+    CHARGING_SYSTEM_FAULT = "chargingSystemFault"
+    ALERT_BRAKE_FLUID = "alertBrakeFluid"
+    STEERING_FAULT = "steeringFault"
+    ALERT_COOLANT_LEVEL = "alertCoolantLevel"
+    LANE_DEPARTURE_WARNING_SYSTEM_FAULT = "laneDepartureWarningSystemFault"
+    FRONT_LEFT_DOOR_OPEN_HIGH_SPEED = "frontLeftDoorOpenHighSpeed"
+    FRONT_RIGHT_DOOR_OPEN_HIGH_SPEED = "frontRightDoorOpenHighSpeed"
+    REAR_LEFT_DOOR_OPEN_HIGH_SPEED = "rearLeftDoorOpenHighSpeed"
+    REAR_RIGHT_DOOR_OPEN_HIGH_SPEED = "rearRightDoorOpenHighSpeed"
+    TRUNK_OPEN_HIGH_SPEED = "trunkOpenHighSpeed"
+    TRUNK_WINDOW_OPEN = "trunkWindowOpen"
+    ESP_FAULT = "espFault"
+    BATTERY_LEVEL_FAULT = "batteryLevelFault"
+    WATER_IN_GASOIL = "waterInGasoil"
+    PAD_WEAR_FAULT = "padWearFault"
+    FUEL_LEVEL_ALARM = "fuelLevelAlarm"
+    AIRBAG_OR_SEATBELT_FAULT = "airbagOrSeatbeltFault"
+    ENGINE_FAULT = "engineFault"
+    ABS_FAULT = "absFault"
+    RISK_OF_PARTICLE_FILTER_BLOCKAGE = "riskOfParticleFilterBlockage"
+    PARTICLE_FILTER_ADDITIVE_TOO_LOW = "particleFilterAdditiveTooLow"
+    SUSPENSION_FAULT = "suspensionFault"
+    PREAHEATING_DEACTIVATED_BATTERY_TOO_LOW = "preaheatingDeactivatedBatteryTooLow"
+    PREAHEATING_DEACTIVATED_FUEL_LEVEL_TOO_LOW = "preaheatingDeactivatedFuelLevelTooLow"
+    CHECK_THE_BRAKE_LAMP = "checkTheBrakeLamp"
+    RETRACTABLE_ROOF_MECHANISM_FAULT = "retractableRoofMechanismFault"
+    ALERT_STEERING_LOCK = "alertSteeringLock"
+    ELECTRONIC_IMMOBILISER_FAULT = "electronicImmobiliserFault"
+    ROOF_OPERATION_IMPOSSIBLE_TEMPERATURE_TOO_HIGH = (
+        "roofOperationImpossibleTemperatureTooHigh"
+    )
+    ROOF_OPERATION_IMPOSSIBLE_START_ENGINE = "roofOperationImpossibleStartEngine"
+    ROOF_OPERATION_IMPOSSIBLE_APPLY_PARKING_BREAK = (
+        "roofOperationImpossibleApplyParkingBreak"
+    )
+    HYBRID_SYSTEM_FAULT = "hybridSystemFault"
+    AUTOMATIC_HEADLAMP_FAULT = "automaticHeadlampFault"
+    HYBRID_SYSTEM_FAULT_REPAIRED_THE_VEHICLE = "hybridSystemFaultRepairedTheVehicle"
+    WASHER_LEVEL_ALARM = "washerLevelAlarm"
+    BATTERY_KEY_ALARM = "batteryKeyAlarm"
+    PREAHEATING_DEACTIVATED_SET_THE_CLOCK = "preaheatingDeactivatedSetTheClock"
+    TRAILER_CONNECTION_FAULT = "trailerConnectionFault"
+    UNDER_INFLATION_TYRE_FAULT = "underInflationTyreFault"
+    LIMITED_VISIBILITY_AIDS_CAMERA = "limitedVisibilityAidsCamera"
+    ELECTRIC_MODE_NOT_AVAILABLE = "electricModeNotAvailable"
+    WHEEL_PRESSURE_FAULT = "wheelPressureFault"
+    CHECK_SIDE_LAMPS = "checkSideLamps"
+    CHECK_RIGHT_BRAKE_LAMP = "checkRightBrakeLamp"
+    CHECK_LEFT_BRAKE_LAMP = "checkLeftBrakeLamp"
+    FRONT_FOGLIGHT_FAULT = "frontFoglightFault"
+    REAR_FOGLIGHT_FAULT = "rearFoglightFault"
+    CHECK_DIRECTION_INDICATOR = "checkDirectionIndicator"
+    CHECK_REVERSING_LAMP = "checkReversingLamp"
+    PARKING_ASSISTANCE_FAULT = "parkingAssistanceFault"
+    ADJUST_TYRE_PRESSURE = "adjustTyrePressure"
+    ANTIPOLLUTION_FAULT = "antipollutionFault"
+    PLACE_GEAR_BOX_TO_P = "placeGearBoxToP"
+    RISK_OF_ICE = "riskOfIce"
+    FRONT_RIGHT_DOOR_OPEN = "frontRightDoorOpen"
+    FRONT_LEFT_DOOR_OPEN = "frontLeftDoorOpen"
+    REAR_RIGHT_DOOR_OPEN = "rearRightDoorOpen"
+    REAR_LEFT_DOOR_OPEN = "rearLeftDoorOpen"
+    TRUNK_OPEN = "trunkOpen"
+    BOOT_OPEN = "bootOpen"
+    REAR_SCREEN_OPEN = "rearScreenOpen"
+    PARKING_BREAK_FAULT = "parkingBreakFault"
+    ACTIVE_SPOILER_FAULT = "activeSpoilerFault"
+    AUTOMATIC_BREAKING_SYSTEM_FAULT = "automaticBreakingSystemFault"
+    DIRECTIONAL_HEADLAMPS_FAULT = "directionalHeadlampsFault"
+    AUTOMATIC_GEARBOX_FAULT = "automaticGearboxFault"
+    SUSPENSION_FAULT_LIMIT_TO90KM = "suspensionFaultLimitTo90km"
+    FRONT_LEFT_TYRE_NOT_MONITORED = "frontLeftTyreNotMonitored"
+    FRONT_RIGHT_TYRE_NOT_MONITORED = "frontRightTyreNotMonitored"
+    REAR_RIGHT_TYRE_NOT_MONITORED = "rearRightTyreNotMonitored"
+    REAR_LEFT_TYRE_NOT_MONITORED = "rearLeftTyreNotMonitored"
+    POWER_STEERING_FAULT = "powerSteeringFault"
+    LANE_DEPARTURE_FAULT = "laneDepartureFault"
+    TYRE_UNDER_INFLATION = "tyreUnderInflation"
+    SPARE_WHEEL_FITTED_DRIVING_AIDS_DEACTIVATED = (
+        "spareWheelFittedDrivingAidsDeactivated"
+    )
+    AUTOMATIC_BREAKING_DEACTIVED = "automaticBreakingDeactived"
+    TUP_UP_AD_BLUE = "tupUpAdBlue"
+    LONG_PUSH_TO_UNLOCK_TANK_FAULT = "longPushToUnlockTankFault"
 
 
 class Alert(BaseEntity):

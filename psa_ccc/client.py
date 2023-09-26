@@ -78,7 +78,7 @@ class PSAClient:
         page_size: int | None = None,
         locale: str | None = None,
         page_token: str | None = None,
-    ) -> mdl.Alerts:
+    ) -> mdl.Alerts | None:
         """Returns the latest alert messages for a Vehicle."""
         params: dict[str, Any] = {
             "indexRange": index_range,
@@ -91,6 +91,8 @@ class PSAClient:
             f"/user/vehicles/{vehicle_id}/alerts",
             params=_query_params(params),
         )
+        if response.status_code == 404:
+            return None
         return _handle_response(response, model=mdl.Alerts)
 
     async def get_vehicle_alerts_by_id(
