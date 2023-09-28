@@ -5,32 +5,10 @@ import argparse
 import asyncio
 from pathlib import Path
 
-import httpx
-from psa_ccc.apk_parser import ConfigInfo
-from psa_ccc.apk_parser import first_launch
-from psa_ccc.auth import oauth_factory
+from psa_ccc import create_psa_client
 from psa_ccc.brand_config import BRAND_CONFIG_MAP
-from psa_ccc.client import PSAClient
-from psa_ccc.storage import CacheStorage
+from psa_ccc.memory_token_storage import MemoryTokenStorage
 from psa_ccc.storage import SimpleCacheStorage
-
-from tests.memory_token_storage import MemoryTokenStorage
-
-# MQTT
-#   ChargeControls load config
-#   myp.remote_client.start()
-# OTP - askCode config view
-#   POST "https://api.groupe-psa.com/applications/cvs/v4/mobile/smsCode?client_id={client_id}"
-#   Headers = {
-#       "x-introspect-realm": realm,
-#       "accept": "application/hal+json",
-#       "User-Agent": "okhttp/4.8.0",
-#   }
-# OTP - finishOtp config view
-# otp_session = new_otp_session(sms_code, code_pin, remote_client.otp)
-# remote_client.otp = otp_session
-# save_config()
-# app.start_remote_control()
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -48,21 +26,10 @@ async def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
     storage = SimpleCacheStorage(Path(__file__).parent)
-    # TODO: do this only on "config" command
-    config = await get_config(args, storage)
-    # TODO: make this configurable, use something permanent
     token_storage = MemoryTokenStorage()
-    brand_config = BRAND_CONFIG_MAP[args.brand]
-    oauth_client = await oauth_factory(
-        config.client_id,
-        config.client_secret,
-        args.email,
-        args.password,
-        brand_config.access_token_url,
-        brand_config.realm,
-        token_storage,
+    api_client = await create_psa_client(
+        args.brand, args.country_code, args.email, args.password, storage, token_storage
     )
-    api_client = PSAClient(client=oauth_client)
 
     user = await api_client.get_user()
     print("User:", user)
@@ -87,20 +54,6 @@ async def main() -> None:
         "last updated at",
         status.last_position.properties.updated_at,
     )
-
-
-async def get_config(args: argparse.Namespace, storage: CacheStorage) -> ConfigInfo:
-    """Retrieve the configuration for the first-time launch."""
-    async with httpx.AsyncClient() as client:
-        config = await first_launch(
-            client,
-            args.brand,
-            args.email,
-            args.password,
-            args.country_code,
-            storage,
-        )
-    return config
 
 
 if __name__ == "__main__":

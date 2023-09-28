@@ -4,8 +4,7 @@ from __future__ import annotations
 import pytest
 from httpx import URL
 from psa_ccc.auth import create_client
-
-from tests.memory_token_storage import MemoryTokenStorage
+from psa_ccc.memory_token_storage import MemoryTokenStorage
 
 
 @pytest.mark.asyncio

@@ -1,7 +1,6 @@
 """Storage Handler."""
 from __future__ import annotations
 
-from dataclasses import dataclass
 from hashlib import sha1
 from pathlib import Path
 from typing import Protocol
@@ -26,11 +25,12 @@ class CacheStorage(Protocol):
         """Save the data to the given file."""
 
 
-@dataclass
 class SimpleCacheStorage:
     """Simple file storage implementation."""
 
-    cache_directory: Path
+    def __init__(self, cache_directory: Path) -> None:
+        """Sets the cache directory."""
+        self.cache_directory = cache_directory
 
     def get_full_path(self, filename: str) -> Path:
         """Returns the full path of the given filename."""
