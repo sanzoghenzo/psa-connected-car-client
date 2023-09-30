@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "psa-connected-car-client"
-version = "v0.1.0"
+version = "v0.1.1"
 description = ""
 authors = ["Andrea Ghensi <andrea.ghensi@gmail.com>"]
 readme = "README.md"
