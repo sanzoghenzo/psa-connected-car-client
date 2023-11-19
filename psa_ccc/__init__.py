@@ -15,7 +15,7 @@ from psa_ccc.memory_token_storage import MemoryTokenStorage
 from psa_ccc.storage import CacheStorage
 from psa_ccc.storage import SimpleCacheStorage
 
-__version__ = "v0.1.1"
+__version__ = "v0.1.2"
 
 
 async def create_psa_client(
