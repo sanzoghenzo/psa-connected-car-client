@@ -29,7 +29,7 @@ optional = true
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.4.2"
-mkdocstrings = "^0.20.0"
+mkdocstrings = ">=0.20,<0.25"
 mkdocstrings-python = "^0.8.3"
 mkdocs-material = "^9.0.13"
 mkdocs-gen-files = "^0.4.0"
