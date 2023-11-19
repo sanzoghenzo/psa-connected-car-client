@@ -3,19 +3,9 @@ from __future__ import annotations
 
 import datetime
 
-import httpx
 import pytest
 from psa_ccc import models
 from psa_ccc.client import ApiError
-from psa_ccc.client import PSAClient
-
-
-@pytest.fixture
-def client() -> PSAClient:
-    http_client = httpx.AsyncClient(
-        base_url="https://api.groupe-psa.com/connectedcar/v4"
-    )
-    yield PSAClient(client=http_client)
 
 
 @pytest.mark.asyncio

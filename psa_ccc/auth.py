@@ -85,7 +85,7 @@ async def oauth_factory(
     token_url: str,
     realm: str,
     token_storage: TokenStorage,
-) -> AsyncOAuth2Client:
+) -> AsyncOAuth2Client:  # pragma: no cover
     """
     Create the OAuth session handler for the API client.
 

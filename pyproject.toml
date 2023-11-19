@@ -8,9 +8,9 @@ packages = [{include = "psa_ccc"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-httpx = "^0.24.1"
+httpx = "^0.25.1"
 authlib = "^1.2.0"
-msgspec = "^0.18.2"
+msgspec = "^0.18.4"
 cryptography = "^41.0.2"
 pyaxmlparser = "^0.3.28"
 
@@ -21,7 +21,7 @@ optional = true
 pytest = "^7.2.1"
 coverage = {extras = ["toml"], version = "^7.1.0"}
 pytest-cov = "^4.0.0"
-pytest-httpx = "^0.24.0"
+pytest-httpx = "^0.27.0"
 pytest-asyncio = "^0.21.0"
 
 [tool.poetry.group.docs]

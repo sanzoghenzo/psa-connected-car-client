@@ -1,17 +1,8 @@
 """Simple Cache Storage tests."""
 from __future__ import annotations
 
-from pathlib import Path
-from tempfile import TemporaryDirectory
-
 import pytest
 from psa_ccc.storage import SimpleCacheStorage
-
-
-@pytest.fixture
-def temp_storage() -> SimpleCacheStorage:
-    with TemporaryDirectory() as temp_directory:
-        yield SimpleCacheStorage(Path(temp_directory))
 
 
 def test_file_doesnt_exist(temp_storage: SimpleCacheStorage) -> None:
